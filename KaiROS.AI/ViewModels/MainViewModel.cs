@@ -75,6 +75,7 @@ public partial class MainViewModel : ViewModelBase
             
             // Initialize child view models
             await CatalogViewModel.InitializeAsync();
+            await ChatViewModel.InitializeAsync();
             await SettingsViewModel.InitializeAsync();
             
             CurrentView = CatalogViewModel;
