@@ -30,17 +30,61 @@ public class HardwareDetectionService : IHardwareDetectionService
                 info.AvailableRamBytes = info.TotalRamBytes - Environment.WorkingSet;
             }
             
-            // Detect GPU via WMI
+            // Detect GPU via WMI - prioritize discrete GPUs (NVIDIA/AMD) over integrated
             try
             {
                 using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController");
+                string? bestGpuName = null;
+                long bestGpuMemory = 0;
+                bool foundNvidia = false;
+                bool foundAmd = false;
+                
                 foreach (ManagementObject mo in searcher.Get())
                 {
-                    info.GpuName = mo["Name"]?.ToString();
-                    if (mo["AdapterRAM"] is uint ram)
-                        info.GpuMemoryBytes = ram;
-                    break; // Use first GPU
+                    var gpuName = mo["Name"]?.ToString() ?? "";
+                    long gpuRam = 0;
+                    
+                    // AdapterRAM can be uint or ulong depending on driver
+                    var ramValue = mo["AdapterRAM"];
+                    if (ramValue is uint ram32)
+                        gpuRam = ram32;
+                    else if (ramValue is ulong ram64)
+                        gpuRam = (long)ram64;
+                    
+                    bool isNvidia = gpuName.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase);
+                    bool isAmd = gpuName.Contains("AMD", StringComparison.OrdinalIgnoreCase) || 
+                                 gpuName.Contains("Radeon", StringComparison.OrdinalIgnoreCase);
+                    bool isIntegrated = gpuName.Contains("Intel", StringComparison.OrdinalIgnoreCase) ||
+                                        gpuName.Contains("Microsoft Basic", StringComparison.OrdinalIgnoreCase);
+                    
+                    // Priority: NVIDIA > AMD > Others > Intel Integrated
+                    if (isNvidia && !foundNvidia)
+                    {
+                        bestGpuName = gpuName;
+                        bestGpuMemory = gpuRam;
+                        foundNvidia = true;
+                    }
+                    else if (isAmd && !foundNvidia && !foundAmd)
+                    {
+                        bestGpuName = gpuName;
+                        bestGpuMemory = gpuRam;
+                        foundAmd = true;
+                    }
+                    else if (!foundNvidia && !foundAmd && !isIntegrated)
+                    {
+                        bestGpuName = gpuName;
+                        bestGpuMemory = gpuRam;
+                    }
+                    else if (bestGpuName == null)
+                    {
+                        // Fallback: use any GPU if nothing better found
+                        bestGpuName = gpuName;
+                        bestGpuMemory = gpuRam;
+                    }
                 }
+                
+                info.GpuName = bestGpuName;
+                info.GpuMemoryBytes = bestGpuMemory;
             }
             catch
             {
@@ -58,7 +102,7 @@ public class HardwareDetectionService : IHardwareDetectionService
             // NPU detection (limited - check for Intel NPU or Qualcomm)
             try
             {
-                using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity WHERE Name LIKE '%NPU%' OR Name LIKE '%Neural%'");
+                using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity WHERE Name LIKE '%NPU%' OR Name LIKE '%Neural%' OR Name LIKE '%AI Boost%'");
                 info.HasNpu = searcher.Get().Count > 0;
             }
             catch
@@ -98,6 +142,11 @@ public class HardwareDetectionService : IHardwareDetectionService
     public bool IsBackendAvailable(ExecutionBackend backend)
     {
         return _cachedInfo?.AvailableBackends.Contains(backend) ?? backend == ExecutionBackend.Cpu;
+    }
+    
+    public void ClearCache()
+    {
+        _cachedInfo = null;
     }
     
     private static ExecutionBackend DetermineRecommendedBackend(HardwareInfo info)

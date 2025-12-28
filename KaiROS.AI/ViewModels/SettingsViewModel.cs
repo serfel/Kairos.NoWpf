@@ -123,6 +123,7 @@ public partial class SettingsViewModel : ViewModelBase
     [RelayCommand]
     private async Task RefreshHardwareInfo()
     {
+        _hardwareService.ClearCache();
         await InitializeAsync();
     }
 }
