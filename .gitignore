@@ -4,6 +4,7 @@ obj/
 *.dll
 *.exe
 *.pdb
+*.msix
 
 # IDE
 .vs/

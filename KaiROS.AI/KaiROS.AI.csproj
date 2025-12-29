@@ -32,6 +32,8 @@
     <Company>KaiROS</Company>
     <Copyright>Copyright © 2024 KaiROS</Copyright>
     <Description>Local AI Assistant powered by LLamaSharp - Run LLMs privately on your own hardware</Description>
+    <PackageCertificateThumbprint>1E4D5886C5D7447BF5538D92527A6AB19463FB5A</PackageCertificateThumbprint>
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
   </PropertyGroup>
 
   <ItemGroup>
@@ -54,21 +56,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\logo.png"/>
+    <Resource Include="Assets\logo.png" />
     <Content Include="Assets\app.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\StoreLogo.png"/>
-    <Content Include="Assets\Square150x150Logo.png"/>
-    <Content Include="Assets\Square44x44Logo.png"/>
-    <Content Include="Assets\Wide310x150Logo.png"/>
-    <Content Include="Assets\Square310x310Logo.png"/>
-    <Content Include="Assets\SmallTile.png"/>
-    <Content Include="Assets\SplashScreen.png"/>
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="Assets\Square150x150Logo.png" />
+    <Content Include="Assets\Square44x44Logo.png" />
+    <Content Include="Assets\Wide310x150Logo.png" />
+    <Content Include="Assets\Square310x310Logo.png" />
+    <Content Include="Assets\SmallTile.png" />
+    <Content Include="Assets\SplashScreen.png" />
   </ItemGroup>
   
   <ItemGroup>
-    <None Include="Package.appxmanifest"/>
+    <None Include="Package.appxmanifest" />
   </ItemGroup>
 
 </Project>
