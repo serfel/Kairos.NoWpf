@@ -96,11 +96,7 @@
             <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
                      Style="{StaticResource ModernTextBox}"
                      Width="250"
-                     Margin="16,0,0,0">
-                <TextBox.InputBindings>
-                    <KeyBinding Key="Escape" Command="{Binding ClearSearchCommand}"/>
-                </TextBox.InputBindings>
-            </TextBox>
+                     Margin="16,0,0,0"/>
         </StackPanel>
         
         <!-- Model List -->

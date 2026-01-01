@@ -31,7 +31,8 @@
     
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="260" MinWidth="200" MaxWidth="400"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         
@@ -139,8 +140,26 @@
             </Grid>
         </Border>
         
+        <!-- Resizable Splitter -->
+        <GridSplitter Grid.Column="1" 
+                      Width="4" 
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Stretch"
+                      Background="Transparent"
+                      Cursor="SizeWE">
+            <GridSplitter.Style>
+                <Style TargetType="GridSplitter">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </GridSplitter.Style>
+        </GridSplitter>
+        
         <!-- Main Content Area -->
-        <Grid Grid.Column="1">
+        <Grid Grid.Column="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>

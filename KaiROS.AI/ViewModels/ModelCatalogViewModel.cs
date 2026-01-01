@@ -182,6 +182,7 @@ public partial class ModelCatalogViewModel : ViewModelBase
     public async Task SetActiveModelAsync(ModelItemViewModel modelVm)
     {
         modelVm.IsLoading = true;
+        modelVm.LoadingProgress = 0;
         modelVm.ErrorMessage = null; // Clear previous error
         
         try
@@ -191,7 +192,13 @@ public partial class ModelCatalogViewModel : ViewModelBase
                 m.IsActive = false;
             }
             
-            var success = await _modelManager.SetActiveModelAsync(modelVm.Model);
+            // Create progress callback to update UI
+            var progress = new Progress<double>(p => 
+            {
+                modelVm.LoadingProgress = p;
+            });
+            
+            var success = await _modelManager.SetActiveModelAsync(modelVm.Model, progress);
             modelVm.IsActive = success;
             
             if (success)
@@ -269,16 +276,27 @@ public partial class ModelItemViewModel : ObservableObject
     // Computed property that triggers UI update
     public bool ShowLoadButton => IsDownloaded && !IsDownloading;
     
-    // Loading text that shows backend type
+    // Loading text that shows backend type and progress
     public string LoadingText
     {
         get
         {
+            if (!IsLoading) return "";
+            
             // Check if NVIDIA GPU is available (simple check via LLamaSharp)
             bool hasGpu = LLama.Native.NativeApi.llama_max_devices() > 0;
-            return IsLoading ? (hasGpu ? "Loading on GPU..." : "Loading on CPU...") : "";
+            var backend = hasGpu ? "GPU" : "CPU";
+            
+            if (LoadingProgress > 0 && LoadingProgress < 100)
+                return $"Loading on {backend}... {LoadingProgress:0}%";
+            else
+                return $"Loading on {backend}...";
         }
     }
+    
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LoadingText))]
+    private double _loadingProgress;
     
     public ModelItemViewModel(LLMModelInfo model, ModelCatalogViewModel parent)
     {

@@ -23,6 +23,7 @@ public class ModelManagerService : IModelManagerService
     public event EventHandler<LLMModelInfo>? ModelDownloadCompleted;
     public event EventHandler<LLMModelInfo>? ModelLoaded;
     public event EventHandler? ModelUnloaded;
+    public event EventHandler<double>? ModelLoadProgress;
     
     public ModelManagerService(IConfiguration configuration, IDownloadService downloadService)
     {
@@ -165,7 +166,7 @@ public class ModelManagerService : IModelManagerService
         }
     }
     
-    public async Task<bool> SetActiveModelAsync(LLMModelInfo model)
+    public async Task<bool> SetActiveModelAsync(LLMModelInfo model, IProgress<double>? progress = null)
     {
         if (!model.IsDownloaded || model.LocalPath == null)
             return false;
@@ -176,24 +177,46 @@ public class ModelManagerService : IModelManagerService
             return false;
         }
         
+        // Report initial progress
+        progress?.Report(5);
+        ModelLoadProgress?.Invoke(this, 5);
+        
         // Unload current model if any
         await UnloadModelAsync();
+        
+        progress?.Report(10);
+        ModelLoadProgress?.Invoke(this, 10);
         
         try
         {
             await Task.Run(() =>
             {
+                // Report parameter setup progress
+                progress?.Report(20);
+                ModelLoadProgress?.Invoke(this, 20);
+                
                 var parameters = new ModelParams(model.LocalPath)
                 {
                     ContextSize = 4096,
                     GpuLayerCount = 35 // Will be adjusted based on hardware
                 };
                 
+                progress?.Report(30);
+                ModelLoadProgress?.Invoke(this, 30);
+                
+                // This is the heavy operation - loading weights
                 _loadedWeights = LLamaWeights.LoadFromFile(parameters);
+                
+                progress?.Report(90);
+                ModelLoadProgress?.Invoke(this, 90);
             });
             
             _activeModel = model;
             model.IsActive = true;
+            
+            progress?.Report(100);
+            ModelLoadProgress?.Invoke(this, 100);
+            
             ModelLoaded?.Invoke(this, model);
             return true;
         }
@@ -202,6 +225,8 @@ public class ModelManagerService : IModelManagerService
             System.Diagnostics.Debug.WriteLine($"Error loading model: {ex.Message}");
             // Store error for UI to display
             model.LoadError = ex.Message;
+            progress?.Report(0);
+            ModelLoadProgress?.Invoke(this, 0);
             return false;
         }
     }

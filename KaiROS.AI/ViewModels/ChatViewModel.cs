@@ -58,6 +58,12 @@ public partial class ChatViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSessionListVisible = true;
     
+    [ObservableProperty]
+    private bool _isSearchVisible;
+    
+    [ObservableProperty]
+    private string _searchText = string.Empty;
+    
     public ChatViewModel(IChatService chatService, IModelManagerService modelManager, ISessionService sessionService, IExportService exportService)
     {
         _chatService = chatService;
@@ -279,6 +285,23 @@ public partial class ChatViewModel : ViewModelBase
     }
     
     [RelayCommand]
+    private void ToggleSearch()
+    {
+        IsSearchVisible = !IsSearchVisible;
+        if (!IsSearchVisible)
+        {
+            SearchText = string.Empty;
+        }
+    }
+    
+    [RelayCommand]
+    private void CloseSearch()
+    {
+        IsSearchVisible = false;
+        SearchText = string.Empty;
+    }
+    
+    [RelayCommand]
     private async Task ExportChatAsMarkdown()
     {
         if (CurrentSession == null || Messages.Count == 0)
@@ -339,6 +362,13 @@ public partial class ChatMessageViewModel : ObservableObject
     public bool IsSystem => Message.Role == ChatRole.System;
     public string Timestamp => Message.Timestamp.ToString("HH:mm");
     
+    // Streaming optimization - batch tokens for smoother UI updates
+    private readonly System.Text.StringBuilder _tokenBuffer = new();
+    private System.Windows.Threading.DispatcherTimer? _flushTimer;
+    private int _pendingTokenCount;
+    private const int BATCH_TOKEN_COUNT = 15;  // Flush after this many tokens
+    private const int FLUSH_INTERVAL_MS = 50;   // Or flush after this many ms
+    
     public ChatMessageViewModel(ChatMessage message)
     {
         Message = message;
@@ -348,12 +378,66 @@ public partial class ChatMessageViewModel : ObservableObject
     
     public void AppendContent(string text)
     {
-        Content += text;
+        // Buffer the token instead of immediate UI update
+        _tokenBuffer.Append(text);
+        _pendingTokenCount++;
+        
+        // Flush if buffer is large enough
+        if (_pendingTokenCount >= BATCH_TOKEN_COUNT)
+        {
+            FlushBuffer();
+        }
+        else
+        {
+            // Start timer to flush after interval
+            EnsureFlushTimer();
+        }
+    }
+    
+    private void EnsureFlushTimer()
+    {
+        if (_flushTimer == null)
+        {
+            _flushTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(FLUSH_INTERVAL_MS)
+            };
+            _flushTimer.Tick += (s, e) => FlushBuffer();
+        }
+        
+        if (!_flushTimer.IsEnabled)
+        {
+            _flushTimer.Start();
+        }
+    }
+    
+    private void FlushBuffer()
+    {
+        _flushTimer?.Stop();
+        
+        if (_tokenBuffer.Length == 0) return;
+        
+        // Batch update the Content property (single UI update)
+        Content += _tokenBuffer.ToString();
         Message.Content = Content;
+        
+        _tokenBuffer.Clear();
+        _pendingTokenCount = 0;
+    }
+    
+    public void FinalizeStreaming()
+    {
+        // Called when streaming ends - flush any remaining tokens
+        FlushBuffer();
+        _flushTimer?.Stop();
+        _flushTimer = null;
     }
     
     public void CleanupContent()
     {
+        // Ensure all buffered content is flushed first
+        FlushBuffer();
+        
         // Remove unwanted tokens from the final content
         var unwantedPatterns = new[] { "###", "\n###", "User:", "\nUser:", "Human:", "\nHuman:", "<|im_end|>", "<|assistant|>" };
         var cleaned = Content;
@@ -367,3 +451,4 @@ public partial class ChatMessageViewModel : ObservableObject
         Message.Content = Content;
     }
 }
+

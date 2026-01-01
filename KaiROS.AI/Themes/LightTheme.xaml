@@ -11,15 +11,15 @@
     <Color x:Key="WarningColor">#F59E0B</Color>
     <Color x:Key="ErrorColor">#EF4444</Color>
     
-    <Color x:Key="BackgroundColor">#0F0F23</Color>
-    <Color x:Key="SurfaceColor">#1A1A2E</Color>
-    <Color x:Key="SurfaceLightColor">#25253A</Color>
-    <Color x:Key="CardColor">#16162A</Color>
-    <Color x:Key="BorderColor">#2D2D44</Color>
+    <Color x:Key="BackgroundColor">#F8FAFC</Color>
+    <Color x:Key="SurfaceColor">#FFFFFF</Color>
+    <Color x:Key="SurfaceLightColor">#F1F5F9</Color>
+    <Color x:Key="CardColor">#FFFFFF</Color>
+    <Color x:Key="BorderColor">#E2E8F0</Color>
     
-    <Color x:Key="TextPrimaryColor">#F9FAFB</Color>
-    <Color x:Key="TextSecondaryColor">#9CA3AF</Color>
-    <Color x:Key="TextMutedColor">#6B7280</Color>
+    <Color x:Key="TextPrimaryColor">#1E293B</Color>
+    <Color x:Key="TextSecondaryColor">#64748B</Color>
+    <Color x:Key="TextMutedColor">#94A3B8</Color>
     
     <!-- Brushes -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
