@@ -13,7 +13,7 @@ public interface IModelManagerService
     Task PauseDownloadAsync(LLMModelInfo model);
     Task ResumeDownloadAsync(LLMModelInfo model);
     Task<bool> DeleteModelAsync(LLMModelInfo model);
-    Task<bool> SetActiveModelAsync(LLMModelInfo model);
+    Task<bool> SetActiveModelAsync(LLMModelInfo model, IProgress<double>? progress = null);
     Task UnloadModelAsync();
     Task<bool> VerifyModelAsync(LLMModelInfo model);
     void SetModelsDirectory(string path);
@@ -22,4 +22,5 @@ public interface IModelManagerService
     event EventHandler<LLMModelInfo>? ModelDownloadCompleted;
     event EventHandler<LLMModelInfo>? ModelLoaded;
     event EventHandler? ModelUnloaded;
+    event EventHandler<double>? ModelLoadProgress;
 }

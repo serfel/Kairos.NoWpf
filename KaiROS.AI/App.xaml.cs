@@ -15,6 +15,9 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
         
+        // Load saved theme preference at startup
+        LoadSavedTheme();
+        
         // Build configuration
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
@@ -31,6 +34,48 @@ public partial class App : System.Windows.Application
         mainWindow.Show();
     }
     
+    private void LoadSavedTheme()
+    {
+        try
+        {
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var themePath = Path.Combine(localAppData, "KaiROS.AI", "theme.txt");
+            
+            if (File.Exists(themePath))
+            {
+                var savedTheme = File.ReadAllText(themePath).Trim();
+                if (savedTheme == "Light")
+                {
+                    // Replace the dark theme with light theme
+                    var lightTheme = new System.Windows.ResourceDictionary
+                    {
+                        Source = new Uri("Themes/LightTheme.xaml", UriKind.Relative)
+                    };
+                    
+                    // Find and remove dark theme
+                    System.Windows.ResourceDictionary? themeToRemove = null;
+                    foreach (var dict in Resources.MergedDictionaries)
+                    {
+                        var source = dict.Source?.OriginalString ?? "";
+                        if (source.Contains("ModernTheme.xaml"))
+                        {
+                            themeToRemove = dict;
+                            break;
+                        }
+                    }
+                    
+                    if (themeToRemove != null)
+                    {
+                        Resources.MergedDictionaries.Remove(themeToRemove);
+                    }
+                    
+                    Resources.MergedDictionaries.Insert(0, lightTheme);
+                }
+            }
+        }
+        catch { /* Ignore errors, use default dark theme */ }
+    }
+    
     private void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         // Configuration
@@ -45,6 +90,9 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IDownloadService>(sp => new DownloadService(modelsDir));
         services.AddSingleton<IHardwareDetectionService, HardwareDetectionService>();
         services.AddSingleton<ISessionService, SessionService>();
+        services.AddSingleton<IExportService, ExportService>();
+        services.AddSingleton<IDocumentService, DocumentService>();
+        services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<ModelManagerService>();
         services.AddSingleton<IModelManagerService>(sp => sp.GetRequiredService<ModelManagerService>());
         services.AddSingleton<ChatService>();
@@ -55,6 +103,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ModelCatalogViewModel>();
         services.AddSingleton<ChatViewModel>();
         services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<DocumentViewModel>();
         
         // Views
         services.AddSingleton<MainWindow>();

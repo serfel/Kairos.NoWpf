@@ -13,6 +13,7 @@ public partial class ChatViewModel : ViewModelBase
     private readonly IChatService _chatService;
     private readonly IModelManagerService _modelManager;
     private readonly ISessionService _sessionService;
+    private readonly IExportService _exportService;
     private CancellationTokenSource? _currentInferenceCts;
     
     [ObservableProperty]
@@ -57,11 +58,18 @@ public partial class ChatViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSessionListVisible = true;
     
-    public ChatViewModel(IChatService chatService, IModelManagerService modelManager, ISessionService sessionService)
+    [ObservableProperty]
+    private bool _isSearchVisible;
+    
+    [ObservableProperty]
+    private string _searchText = string.Empty;
+    
+    public ChatViewModel(IChatService chatService, IModelManagerService modelManager, ISessionService sessionService, IExportService exportService)
     {
         _chatService = chatService;
         _modelManager = modelManager;
         _sessionService = sessionService;
+        _exportService = exportService;
         
         _chatService.StatsUpdated += OnStatsUpdated;
         _modelManager.ModelLoaded += OnModelLoaded;
@@ -277,41 +285,59 @@ public partial class ChatViewModel : ViewModelBase
     }
     
     [RelayCommand]
-    private async Task ExportChat()
+    private void ToggleSearch()
     {
-        var dialog = new Microsoft.Win32.SaveFileDialog
+        IsSearchVisible = !IsSearchVisible;
+        if (!IsSearchVisible)
         {
-            Filter = "JSON files (*.json)|*.json|Text files (*.txt)|*.txt",
-            DefaultExt = "json",
-            FileName = $"chat_export_{DateTime.Now:yyyyMMdd_HHmmss}"
-        };
-        
-        if (dialog.ShowDialog() == true)
-        {
-            try
-            {
-                if (dialog.FileName.EndsWith(".json"))
-                {
-                    var export = Messages.Select(m => new
-                    {
-                        Role = m.Message.Role.ToString(),
-                        m.Content,
-                        m.Message.Timestamp
-                    });
-                    var json = JsonSerializer.Serialize(export, new JsonSerializerOptions { WriteIndented = true });
-                    await File.WriteAllTextAsync(dialog.FileName, json);
-                }
-                else
-                {
-                    var lines = Messages.Select(m => $"[{m.Message.Role}] {m.Content}");
-                    await File.WriteAllLinesAsync(dialog.FileName, lines);
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Export failed: {ex.Message}";
-            }
+            SearchText = string.Empty;
         }
+    }
+    
+    [RelayCommand]
+    private void CloseSearch()
+    {
+        IsSearchVisible = false;
+        SearchText = string.Empty;
+    }
+    
+    [RelayCommand]
+    private async Task ExportChatAsMarkdown()
+    {
+        if (CurrentSession == null || Messages.Count == 0)
+        {
+            ErrorMessage = "No conversation to export";
+            return;
+        }
+        
+        var messages = Messages.Select(m => m.Message).ToList();
+        await _exportService.ExportWithDialogAsync(CurrentSession, messages, ExportFormat.Markdown);
+    }
+    
+    [RelayCommand]
+    private async Task ExportChatAsJson()
+    {
+        if (CurrentSession == null || Messages.Count == 0)
+        {
+            ErrorMessage = "No conversation to export";
+            return;
+        }
+        
+        var messages = Messages.Select(m => m.Message).ToList();
+        await _exportService.ExportWithDialogAsync(CurrentSession, messages, ExportFormat.Json);
+    }
+    
+    [RelayCommand]
+    private async Task ExportChatAsText()
+    {
+        if (CurrentSession == null || Messages.Count == 0)
+        {
+            ErrorMessage = "No conversation to export";
+            return;
+        }
+        
+        var messages = Messages.Select(m => m.Message).ToList();
+        await _exportService.ExportWithDialogAsync(CurrentSession, messages, ExportFormat.Text);
     }
     
     [RelayCommand]
@@ -336,6 +362,13 @@ public partial class ChatMessageViewModel : ObservableObject
     public bool IsSystem => Message.Role == ChatRole.System;
     public string Timestamp => Message.Timestamp.ToString("HH:mm");
     
+    // Streaming optimization - batch tokens for smoother UI updates
+    private readonly System.Text.StringBuilder _tokenBuffer = new();
+    private System.Windows.Threading.DispatcherTimer? _flushTimer;
+    private int _pendingTokenCount;
+    private const int BATCH_TOKEN_COUNT = 15;  // Flush after this many tokens
+    private const int FLUSH_INTERVAL_MS = 50;   // Or flush after this many ms
+    
     public ChatMessageViewModel(ChatMessage message)
     {
         Message = message;
@@ -345,12 +378,66 @@ public partial class ChatMessageViewModel : ObservableObject
     
     public void AppendContent(string text)
     {
-        Content += text;
+        // Buffer the token instead of immediate UI update
+        _tokenBuffer.Append(text);
+        _pendingTokenCount++;
+        
+        // Flush if buffer is large enough
+        if (_pendingTokenCount >= BATCH_TOKEN_COUNT)
+        {
+            FlushBuffer();
+        }
+        else
+        {
+            // Start timer to flush after interval
+            EnsureFlushTimer();
+        }
+    }
+    
+    private void EnsureFlushTimer()
+    {
+        if (_flushTimer == null)
+        {
+            _flushTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(FLUSH_INTERVAL_MS)
+            };
+            _flushTimer.Tick += (s, e) => FlushBuffer();
+        }
+        
+        if (!_flushTimer.IsEnabled)
+        {
+            _flushTimer.Start();
+        }
+    }
+    
+    private void FlushBuffer()
+    {
+        _flushTimer?.Stop();
+        
+        if (_tokenBuffer.Length == 0) return;
+        
+        // Batch update the Content property (single UI update)
+        Content += _tokenBuffer.ToString();
         Message.Content = Content;
+        
+        _tokenBuffer.Clear();
+        _pendingTokenCount = 0;
+    }
+    
+    public void FinalizeStreaming()
+    {
+        // Called when streaming ends - flush any remaining tokens
+        FlushBuffer();
+        _flushTimer?.Stop();
+        _flushTimer = null;
     }
     
     public void CleanupContent()
     {
+        // Ensure all buffered content is flushed first
+        FlushBuffer();
+        
         // Remove unwanted tokens from the final content
         var unwantedPatterns = new[] { "###", "\n###", "User:", "\nUser:", "Human:", "\nHuman:", "<|im_end|>", "<|assistant|>" };
         var cleaned = Content;
@@ -364,3 +451,4 @@ public partial class ChatMessageViewModel : ObservableObject
         Message.Content = Content;
     }
 }
+

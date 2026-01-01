@@ -11,6 +11,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly IHardwareDetectionService _hardwareService;
     private readonly IModelManagerService _modelManager;
     private readonly ChatViewModel _chatViewModel;
+    private readonly IThemeService _themeService;
     
     private const string DefaultSystemPrompt = "You are a helpful, friendly AI assistant. Be concise and clear.";
     
@@ -38,20 +39,39 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _systemPrompt = DefaultSystemPrompt;
     
-    public SettingsViewModel(IHardwareDetectionService hardwareService, IModelManagerService modelManager, ChatViewModel chatViewModel)
+    [ObservableProperty]
+    private bool _isDarkTheme = true;
+    
+    public SettingsViewModel(IHardwareDetectionService hardwareService, IModelManagerService modelManager, ChatViewModel chatViewModel, IThemeService themeService)
     {
         _hardwareService = hardwareService;
         _modelManager = modelManager;
         _chatViewModel = chatViewModel;
+        _themeService = themeService;
         
         // Initialize system prompt from ChatViewModel
         _systemPrompt = chatViewModel.SystemPrompt;
+        
+        // Initialize theme from service
+        _isDarkTheme = _themeService.CurrentTheme == "Dark";
     }
     
     partial void OnSystemPromptChanged(string value)
     {
         // Sync to ChatViewModel
         _chatViewModel.SystemPrompt = value;
+    }
+    
+    partial void OnIsDarkThemeChanged(bool value)
+    {
+        _themeService.SetTheme(value ? "Dark" : "Light");
+        
+        // Show message that restart is needed
+        System.Windows.MessageBox.Show(
+            "Theme preference saved. Please restart the application for the theme to take effect.",
+            "Theme Changed",
+            System.Windows.MessageBoxButton.OK,
+            System.Windows.MessageBoxImage.Information);
     }
     
     public override async Task InitializeAsync()

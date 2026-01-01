@@ -23,6 +23,43 @@
                            Margin="0,4,0,0"/>
             </StackPanel>
             
+            <!-- Appearance Settings -->
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="🎨 Appearance" 
+                               FontSize="18" 
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               Margin="0,0,0,16"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel>
+                            <TextBlock Text="Theme" 
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="Choose between dark and light mode" 
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                        
+                        <!-- Theme Toggle -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="☀️" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <CheckBox IsChecked="{Binding IsDarkTheme}"
+                                      Style="{StaticResource ModernToggleSwitch}"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Text="🌙" FontSize="16" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+            
             <!-- Hardware Information -->
             <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
                 <StackPanel>

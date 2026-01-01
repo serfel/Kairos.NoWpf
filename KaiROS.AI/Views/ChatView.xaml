@@ -7,6 +7,7 @@
     <UserControl.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <converters:InverseBoolConverter x:Key="InverseBool"/>
+        <converters:MarkdownContentConverter x:Key="MarkdownConverter"/>
     </UserControl.Resources>
     
     <Grid>
@@ -130,9 +131,49 @@
                             Command="{Binding ClearChatCommand}"
                             Style="{StaticResource SecondaryButton}"
                             Margin="0,0,8,0"/>
-                    <Button Content="📤 Export" 
-                            Command="{Binding ExportChatCommand}"
-                            Style="{StaticResource SecondaryButton}"/>
+                    <Button Content="🔍" 
+                            Command="{Binding ToggleSearchCommand}"
+                            Style="{StaticResource SecondaryButton}"
+                            ToolTip="Search (Ctrl+F)"
+                            Margin="0,0,8,0"/>
+                    <!-- Search Bar (collapsible) -->
+                    <Border Visibility="{Binding IsSearchVisible, Converter={StaticResource BoolToVis}}"
+                            Background="{StaticResource SurfaceLightBrush}"
+                            CornerRadius="8"
+                            Padding="8,4"
+                            Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Width="150"
+                                     Padding="4"
+                                     VerticalAlignment="Center"/>
+                            <Button Content="✕" 
+                                    Command="{Binding CloseSearchCommand}"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Padding="4,2"
+                                    Margin="4,0,0,0"
+                                    FontSize="10"/>
+                        </StackPanel>
+                    </Border>
+                    <Button x:Name="ExportButton" 
+                            Style="{StaticResource SecondaryButton}"
+                            Click="ExportButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📤 Export"/>
+                            <TextBlock Text=" ▾" Opacity="0.7"/>
+                        </StackPanel>
+                        <Button.ContextMenu>
+                            <ContextMenu x:Name="ExportMenu">
+                                <MenuItem Header="📝 Export as Markdown (.md)" 
+                                          Command="{Binding ExportChatAsMarkdownCommand}"/>
+                                <MenuItem Header="📊 Export as JSON (.json)" 
+                                          Command="{Binding ExportChatAsJsonCommand}"/>
+                                <MenuItem Header="📄 Export as Text (.txt)" 
+                                          Command="{Binding ExportChatAsTextCommand}"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -179,9 +220,7 @@
                                                    FontSize="12"
                                                    FontWeight="SemiBold"
                                                    Margin="0,0,0,8"/>
-                                        <TextBlock Text="{Binding Content}" 
-                                                   Foreground="{StaticResource TextPrimaryBrush}"
-                                                   TextWrapping="Wrap"/>
+                                        <ContentPresenter Content="{Binding Content, Converter={StaticResource MarkdownConverter}}"/>
                                         <TextBlock Text="{Binding Timestamp}" 
                                                    Foreground="{StaticResource TextMutedBrush}"
                                                    FontSize="11"
@@ -226,12 +265,19 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
-                <TextBox Text="{Binding UserInput, UpdateSourceTrigger=PropertyChanged}"
+                <TextBox x:Name="MessageInput"
+                         Text="{Binding UserInput, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource ModernTextBox}"
-                         AcceptsReturn="False"
-                         MaxHeight="100">
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MaxHeight="150"
+                         VerticalScrollBarVisibility="Auto"
+                         ToolTip="Ctrl+Enter to send">
                     <TextBox.InputBindings>
-                        <KeyBinding Key="Enter" Command="{Binding SendMessageCommand}"/>
+                        <KeyBinding Gesture="Ctrl+Enter" Command="{Binding SendMessageCommand}"/>
+                        <KeyBinding Gesture="Ctrl+N" Command="{Binding NewSessionCommand}"/>
+                        <KeyBinding Gesture="Ctrl+L" Command="{Binding ClearChatCommand}"/>
+                        <KeyBinding Gesture="Ctrl+F" Command="{Binding ToggleSearchCommand}"/>
                     </TextBox.InputBindings>
                 </TextBox>
                 
