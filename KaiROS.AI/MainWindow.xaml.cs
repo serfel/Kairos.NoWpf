@@ -1,15 +1,23 @@
-﻿using System.IO;
+﻿using System.Drawing;
+using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using KaiROS.AI.Services;
 using KaiROS.AI.ViewModels;
 
 namespace KaiROS.AI;
 
 public partial class MainWindow : Window
 {
-    public MainWindow(MainViewModel viewModel)
+    private readonly MainViewModel _viewModel;
+    private readonly IApiService _apiService;
+    private bool _isExiting = false;
+    
+    public MainWindow(MainViewModel viewModel, IApiService apiService)
     {
         InitializeComponent();
+        _viewModel = viewModel;
+        _apiService = apiService;
         DataContext = viewModel;
         
         // Set window icon from file
@@ -19,6 +27,9 @@ public partial class MainWindow : Window
             if (File.Exists(iconPath))
             {
                 Icon = new BitmapImage(new Uri(iconPath, UriKind.Absolute));
+                
+                // Also set tray icon
+                TrayIcon.Icon = new Icon(iconPath);
             }
         }
         catch { /* Ignore icon loading errors */ }
@@ -27,5 +38,68 @@ public partial class MainWindow : Window
         {
             await viewModel.InitializeAsync();
         };
+    }
+    
+    private void Window_StateChanged(object sender, EventArgs e)
+    {
+        // Only minimize to tray when API is running
+        if (WindowState == WindowState.Minimized && _apiService.IsRunning)
+        {
+            Hide();
+            TrayIcon.Visibility = Visibility.Visible;
+        }
+    }
+    
+    private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // Only minimize to tray if API is running, otherwise close normally
+        if (!_isExiting && _apiService.IsRunning)
+        {
+            // Minimize to tray instead of closing
+            e.Cancel = true;
+            WindowState = WindowState.Minimized;
+            Hide();
+            TrayIcon.Visibility = Visibility.Visible;
+            
+            // Show notification first time
+            TrayIcon.ShowBalloonTip("KaiROS AI", "API server running in background. Right-click tray icon for options.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
+        }
+        else
+        {
+            // Actually close - dispose tray icon
+            TrayIcon.Dispose();
+        }
+    }
+    
+    private void RestoreWindow()
+    {
+        Show();
+        WindowState = WindowState.Normal;
+        Activate();
+        TrayIcon.Visibility = Visibility.Collapsed;
+    }
+    
+    private void TrayMenu_NewChat(object sender, RoutedEventArgs e)
+    {
+        RestoreWindow();
+        _viewModel.NavigateToChatCommand.Execute(null);
+        (_viewModel.CurrentView as ChatViewModel)?.NewSessionCommand.Execute(null);
+    }
+    
+    private void TrayMenu_Settings(object sender, RoutedEventArgs e)
+    {
+        RestoreWindow();
+        _viewModel.NavigateToSettingsCommand.Execute(null);
+    }
+    
+    private void TrayMenu_Restore(object sender, RoutedEventArgs e)
+    {
+        RestoreWindow();
+    }
+    
+    private void TrayMenu_Exit(object sender, RoutedEventArgs e)
+    {
+        _isExiting = true;
+        Close();
     }
 }
