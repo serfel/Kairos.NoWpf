@@ -35,14 +35,41 @@
 
 ## ✨ Features
 
+### Core
 - 🤖 **Run LLMs Locally** - No internet required after model download
 - 🚀 **GPU Acceleration** - CUDA 12 support for NVIDIA GPUs
 - 📦 **Model Catalog** - Pre-configured models from Hugging Face
 - ⬇️ **Download Manager** - Pause, resume, and manage model downloads
 - 💬 **Chat Interface** - Clean, modern UI with streaming responses
 - 📊 **Performance Stats** - Real-time tokens/sec and memory usage
+
+### Advanced
+- 🔌 **Local REST API** - OpenAI-compatible API server for integration
+  - Endpoints: `/health`, `/models`, `/chat`, `/chat/stream`
+  - Works with VS Code Continue, LM Studio clients, curl
+- 🗔 **System Tray** - Minimize to tray when API is running
+- 💬 **Feedback Hub** - Send feedback directly from Settings
 - 🎨 **Modern Dark Theme** - Beautiful gradient-based UI design
 - 🔧 **Hardware Detection** - Automatic CPU/GPU/NPU detection
+
+## 🔌 API Mode
+
+KaiROS AI includes a local REST API server for integration with other tools:
+
+```bash
+# Check status
+curl http://localhost:5000/health
+
+# Chat (non-streaming)
+curl -X POST http://localhost:5000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Hello!"}]}'
+
+# Streaming
+curl http://localhost:5000/chat/stream ...
+```
+
+**Enable in Settings → API Server**
 
 ## 📸 Screenshots
 

@@ -87,6 +87,7 @@ public partial class App : System.Windows.Application
         var modelsDir = Path.Combine(localAppData, "KaiROS.AI", "Models");
         
         // Services
+        services.AddSingleton<IDatabaseService, DatabaseService>();
         services.AddSingleton<IDownloadService>(sp => new DownloadService(modelsDir));
         services.AddSingleton<IHardwareDetectionService, HardwareDetectionService>();
         services.AddSingleton<ISessionService, SessionService>();
@@ -97,6 +98,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IModelManagerService>(sp => sp.GetRequiredService<ModelManagerService>());
         services.AddSingleton<ChatService>();
         services.AddSingleton<IChatService>(sp => sp.GetRequiredService<ChatService>());
+        services.AddSingleton<IApiService, ApiService>();
         
         // ViewModels
         services.AddSingleton<MainViewModel>();

@@ -12,6 +12,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly IModelManagerService _modelManager;
     private readonly ChatViewModel _chatViewModel;
     private readonly IThemeService _themeService;
+    private readonly IApiService _apiService;
     
     private const string DefaultSystemPrompt = "You are a helpful, friendly AI assistant. Be concise and clear.";
     
@@ -42,18 +43,58 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDarkTheme = true;
     
-    public SettingsViewModel(IHardwareDetectionService hardwareService, IModelManagerService modelManager, ChatViewModel chatViewModel, IThemeService themeService)
+    // API Settings
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ApiStatus))]
+    [NotifyPropertyChangedFor(nameof(IsMinimizeToTrayEnabled))]
+    private bool _isApiEnabled = false;
+    
+    [ObservableProperty]
+    private int _apiPort = 5000;
+    
+    // API can only be enabled when a model is loaded
+    public bool CanEnableApi => _modelManager.ActiveModel != null;
+    
+    // System tray only enabled when API is running
+    public bool IsMinimizeToTrayEnabled => IsApiEnabled && _apiService.IsRunning;
+    
+    public string ApiStatus => _apiService.IsRunning 
+        ? $"Running on http://localhost:{_apiService.Port}/" 
+        : CanEnableApi ? "Stopped (ready to start)" : "Disabled (load a model first)";
+    
+    public SettingsViewModel(IHardwareDetectionService hardwareService, IModelManagerService modelManager, ChatViewModel chatViewModel, IThemeService themeService, IApiService apiService)
     {
         _hardwareService = hardwareService;
         _modelManager = modelManager;
         _chatViewModel = chatViewModel;
         _themeService = themeService;
+        _apiService = apiService;
         
         // Initialize system prompt from ChatViewModel
         _systemPrompt = chatViewModel.SystemPrompt;
         
         // Initialize theme from service
         _isDarkTheme = _themeService.CurrentTheme == "Dark";
+        
+        // Initialize API status
+        _isApiEnabled = _apiService.IsRunning;
+        
+        // Subscribe to model events to update CanEnableApi
+        _modelManager.ModelLoaded += (s, e) => 
+        {
+            OnPropertyChanged(nameof(CanEnableApi));
+            OnPropertyChanged(nameof(ApiStatus));
+        };
+        _modelManager.ModelUnloaded += (s, e) => 
+        {
+            OnPropertyChanged(nameof(CanEnableApi));
+            OnPropertyChanged(nameof(ApiStatus));
+            // Disable API if model is unloaded
+            if (IsApiEnabled)
+            {
+                IsApiEnabled = false;
+            }
+        };
     }
     
     partial void OnSystemPromptChanged(string value)
@@ -72,6 +113,20 @@ public partial class SettingsViewModel : ViewModelBase
             "Theme Changed",
             System.Windows.MessageBoxButton.OK,
             System.Windows.MessageBoxImage.Information);
+    }
+    
+    async partial void OnIsApiEnabledChanged(bool value)
+    {
+        if (value)
+        {
+            await _apiService.StartAsync(ApiPort);
+            OnPropertyChanged(nameof(ApiStatus));
+        }
+        else
+        {
+            await _apiService.StopAsync();
+            OnPropertyChanged(nameof(ApiStatus));
+        }
     }
     
     public override async Task InitializeAsync()
@@ -110,6 +165,8 @@ public partial class SettingsViewModel : ViewModelBase
         if (Hardware != null)
         {
             Hardware.SelectedBackend = value;
+            // Also update the service's cached copy so model loading respects this selection
+            _hardwareService.SetSelectedBackend(value);
             UpdateBackendStatus();
         }
     }
