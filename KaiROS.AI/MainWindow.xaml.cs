@@ -2,6 +2,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using KaiROS.AI.Services;
 using KaiROS.AI.ViewModels;
 
 namespace KaiROS.AI;
@@ -9,12 +10,14 @@ namespace KaiROS.AI;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
+    private readonly IApiService _apiService;
     private bool _isExiting = false;
     
-    public MainWindow(MainViewModel viewModel)
+    public MainWindow(MainViewModel viewModel, IApiService apiService)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        _apiService = apiService;
         DataContext = viewModel;
         
         // Set window icon from file
@@ -39,8 +42,8 @@ public partial class MainWindow : Window
     
     private void Window_StateChanged(object sender, EventArgs e)
     {
-        // Minimize to tray when minimized
-        if (WindowState == WindowState.Minimized)
+        // Only minimize to tray when API is running
+        if (WindowState == WindowState.Minimized && _apiService.IsRunning)
         {
             Hide();
             TrayIcon.Visibility = Visibility.Visible;
@@ -49,7 +52,8 @@ public partial class MainWindow : Window
     
     private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
-        if (!_isExiting)
+        // Only minimize to tray if API is running, otherwise close normally
+        if (!_isExiting && _apiService.IsRunning)
         {
             // Minimize to tray instead of closing
             e.Cancel = true;
@@ -58,7 +62,7 @@ public partial class MainWindow : Window
             TrayIcon.Visibility = Visibility.Visible;
             
             // Show notification first time
-            TrayIcon.ShowBalloonTip("KaiROS AI", "App minimized to system tray. Right-click for options.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
+            TrayIcon.ShowBalloonTip("KaiROS AI", "API server running in background. Right-click tray icon for options.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
         }
         else
         {

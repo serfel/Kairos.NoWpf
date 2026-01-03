@@ -46,14 +46,21 @@ public partial class SettingsViewModel : ViewModelBase
     // API Settings
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ApiStatus))]
+    [NotifyPropertyChangedFor(nameof(IsMinimizeToTrayEnabled))]
     private bool _isApiEnabled = false;
     
     [ObservableProperty]
     private int _apiPort = 5000;
     
+    // API can only be enabled when a model is loaded
+    public bool CanEnableApi => _modelManager.ActiveModel != null;
+    
+    // System tray only enabled when API is running
+    public bool IsMinimizeToTrayEnabled => IsApiEnabled && _apiService.IsRunning;
+    
     public string ApiStatus => _apiService.IsRunning 
         ? $"Running on http://localhost:{_apiService.Port}/" 
-        : "Stopped";
+        : CanEnableApi ? "Stopped (ready to start)" : "Disabled (load a model first)";
     
     public SettingsViewModel(IHardwareDetectionService hardwareService, IModelManagerService modelManager, ChatViewModel chatViewModel, IThemeService themeService, IApiService apiService)
     {
@@ -71,6 +78,23 @@ public partial class SettingsViewModel : ViewModelBase
         
         // Initialize API status
         _isApiEnabled = _apiService.IsRunning;
+        
+        // Subscribe to model events to update CanEnableApi
+        _modelManager.ModelLoaded += (s, e) => 
+        {
+            OnPropertyChanged(nameof(CanEnableApi));
+            OnPropertyChanged(nameof(ApiStatus));
+        };
+        _modelManager.ModelUnloaded += (s, e) => 
+        {
+            OnPropertyChanged(nameof(CanEnableApi));
+            OnPropertyChanged(nameof(ApiStatus));
+            // Disable API if model is unloaded
+            if (IsApiEnabled)
+            {
+                IsApiEnabled = false;
+            }
+        };
     }
     
     partial void OnSystemPromptChanged(string value)

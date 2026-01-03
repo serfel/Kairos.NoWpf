@@ -133,6 +133,10 @@ public class ApiService : IApiService
             // Route requests
             switch (path.ToLowerInvariant())
             {
+                case "/":
+                    await HandleHomeAsync(response);
+                    break;
+                    
                 case "/health":
                     await HandleHealthAsync(response);
                     break;
@@ -158,6 +162,178 @@ public class ApiService : IApiService
         {
             await SendErrorAsync(response, 500, ex.Message);
         }
+    }
+    
+    private async Task HandleHomeAsync(HttpListenerResponse response)
+    {
+        var modelName = _modelManager.ActiveModel?.Name ?? "No model loaded";
+        var modelCount = _modelManager.Models.Count(m => m.IsDownloaded);
+        
+        var html = $@"
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>KaiROS AI - Local API</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }}
+        .container {{ max-width: 800px; margin: 0 auto; }}
+        .header {{
+            text-align: center;
+            margin-bottom: 40px;
+        }}
+        .logo {{
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }}
+        h1 {{
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }}
+        .subtitle {{ color: #888; font-size: 1.1rem; }}
+        .status-card {{
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }}
+        .status-indicator {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(76, 175, 80, 0.2);
+            border-radius: 20px;
+            color: #4caf50;
+            font-weight: 600;
+        }}
+        .dot {{ width: 10px; height: 10px; background: #4caf50; border-radius: 50%; animation: pulse 2s infinite; }}
+        @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} }}
+        .endpoints {{ margin-top: 30px; }}
+        .endpoint {{
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }}
+        .method {{
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-right: 10px;
+        }}
+        .get {{ background: #2196f3; color: white; }}
+        .post {{ background: #4caf50; color: white; }}
+        .path {{ font-family: 'Consolas', monospace; color: #fff; }}
+        .desc {{ color: #888; margin-top: 8px; font-size: 0.9rem; }}
+        code {{
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            color: #e0e0e0;
+        }}
+        pre {{
+            background: rgba(0,0,0,0.4);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-top: 16px;
+            font-size: 0.85rem;
+        }}
+        .footer {{
+            text-align: center;
+            color: #666;
+            margin-top: 40px;
+            font-size: 0.9rem;
+        }}
+    </style>
+</head>
+<body>
+    <div class=""container"">
+        <div class=""header"">
+            <div class=""logo"">🧠</div>
+            <h1>KaiROS AI</h1>
+            <p class=""subtitle"">Local LLM API Server</p>
+        </div>
+        
+        <div class=""status-card"">
+            <div class=""status-indicator"">
+                <span class=""dot""></span> API Running
+            </div>
+            <p style=""margin-top: 16px;"">
+                <strong>Active Model:</strong> <code>{modelName}</code><br>
+                <strong>Available Models:</strong> {modelCount}
+            </p>
+        </div>
+        
+        <div class=""endpoints"">
+            <h2 style=""margin-bottom: 16px;"">📡 API Endpoints</h2>
+            
+            <div class=""endpoint"">
+                <span class=""method get"">GET</span>
+                <span class=""path"">/health</span>
+                <p class=""desc"">Check API status and loaded model</p>
+            </div>
+            
+            <div class=""endpoint"">
+                <span class=""method get"">GET</span>
+                <span class=""path"">/models</span>
+                <p class=""desc"">List available models</p>
+            </div>
+            
+            <div class=""endpoint"">
+                <span class=""method post"">POST</span>
+                <span class=""path"">/chat</span>
+                <p class=""desc"">Send a message and get a complete response</p>
+            </div>
+            
+            <div class=""endpoint"">
+                <span class=""method post"">POST</span>
+                <span class=""path"">/chat/stream</span>
+                <p class=""desc"">Send a message and get streaming response (SSE)</p>
+            </div>
+        </div>
+        
+        <div class=""status-card"" style=""margin-top: 30px;"">
+            <h3 style=""margin-bottom: 12px;"">💡 Example Request</h3>
+            <pre>POST /chat
+Content-Type: application/json
+
+{{
+  ""messages"": [
+    {{ ""role"": ""user"", ""content"": ""Hello!"" }}
+  ]
+}}</pre>
+        </div>
+        
+        <div class=""footer"">
+            <p>KaiROS AI v1.0 • Running on localhost:{Port}</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        response.ContentType = "text/html";
+        var bytes = Encoding.UTF8.GetBytes(html);
+        response.ContentLength64 = bytes.Length;
+        await response.OutputStream.WriteAsync(bytes);
+        response.Close();
     }
     
     private async Task HandleHealthAsync(HttpListenerResponse response)

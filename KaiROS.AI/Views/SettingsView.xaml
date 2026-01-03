@@ -1,211 +1,289 @@
-<UserControl x:Class="KaiROS.AI.Views.SettingsView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="clr-namespace:KaiROS.AI.Converters"
-             xmlns:models="clr-namespace:KaiROS.AI.Models">
-    
+<UserControl
+    x:Class="KaiROS.AI.Views.SettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:KaiROS.AI.Converters"
+    xmlns:models="clr-namespace:KaiROS.AI.Models">
+
     <UserControl.Resources>
-        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
-        <converters:BackendToStringConverter x:Key="BackendToString"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <converters:BackendToStringConverter x:Key="BackendToString" />
     </UserControl.Resources>
-    
+
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
-            <!-- Header -->
+            <!--  Header  -->
             <StackPanel Margin="0,0,0,24">
-                <TextBlock Text="Settings" 
-                           FontSize="28" 
-                           FontWeight="Bold" 
-                           Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Configure hardware, storage, and runtime options" 
-                           FontSize="14" 
-                           Foreground="{StaticResource TextSecondaryBrush}"
-                           Margin="0,4,0,0"/>
+                <TextBlock
+                    FontSize="28"
+                    FontWeight="Bold"
+                    Foreground="{StaticResource TextPrimaryBrush}"
+                    Text="Settings" />
+                <TextBlock
+                    Margin="0,4,0,0"
+                    FontSize="14"
+                    Foreground="{StaticResource TextSecondaryBrush}"
+                    Text="Configure hardware, storage, and runtime options" />
             </StackPanel>
-            
-            <!-- Appearance Settings -->
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+
+            <!--  Appearance Settings  -->
+            <Border Margin="0,0,0,16" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="🎨 Appearance" 
-                               FontSize="18" 
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               Margin="0,0,0,16"/>
-                    
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource TextPrimaryBrush}"
+                        Text="🎨 Appearance" />
+
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        
+
                         <StackPanel>
-                            <TextBlock Text="Theme" 
-                                       Foreground="{StaticResource TextPrimaryBrush}"
-                                       FontWeight="SemiBold"/>
-                            <TextBlock Text="Choose between dark and light mode" 
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       FontSize="12"
-                                       Margin="0,4,0,0"/>
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Foreground="{StaticResource TextPrimaryBrush}"
+                                Text="Theme" />
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontSize="12"
+                                Foreground="{StaticResource TextSecondaryBrush}"
+                                Text="Choose between dark and light mode" />
                         </StackPanel>
-                        
-                        <!-- Theme Toggle -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="☀️" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <CheckBox IsChecked="{Binding IsDarkTheme}"
-                                      Style="{StaticResource ModernToggleSwitch}"
-                                      VerticalAlignment="Center"/>
-                            <TextBlock Text="🌙" FontSize="16" Margin="8,0,0,0" VerticalAlignment="Center"/>
+
+                        <!--  Theme Toggle  -->
+                        <StackPanel
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                Text="☀️" />
+                            <CheckBox
+                                VerticalAlignment="Center"
+                                IsChecked="{Binding IsDarkTheme}"
+                                Style="{StaticResource ModernToggleSwitch}" />
+                            <TextBlock
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                Text="🌙" />
                         </StackPanel>
                     </Grid>
                 </StackPanel>
             </Border>
-            
-            <!-- API Settings -->
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+
+            <!--  API Settings  -->
+            <Border Margin="0,0,0,16" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="🔌 API Server" 
-                               FontSize="18" 
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               Margin="0,0,0,16"/>
-                    
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource TextPrimaryBrush}"
+                        Text="🔌 API Server" />
+
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        
+
                         <StackPanel>
-                            <TextBlock Text="Enable Local API" 
-                                       Foreground="{StaticResource TextPrimaryBrush}"
-                                       FontWeight="SemiBold"/>
-                            <TextBlock Text="Expose OpenAI-compatible REST API on localhost" 
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       FontSize="12"
-                                       Margin="0,4,0,0"/>
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Foreground="{StaticResource TextPrimaryBrush}"
+                                Text="Enable Local API" />
+                            <TextBlock
+                                Margin="0,4,0,0"
+                                FontSize="12"
+                                Foreground="{StaticResource TextSecondaryBrush}"
+                                Text="Expose OpenAI-compatible REST API on localhost" />
                         </StackPanel>
-                        
-                        <CheckBox Grid.Column="1" 
-                                  IsChecked="{Binding IsApiEnabled}"
-                                  Style="{StaticResource ModernToggleSwitch}"
-                                  VerticalAlignment="Center"/>
+
+                        <CheckBox
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            IsChecked="{Binding IsApiEnabled}"
+                            IsEnabled="{Binding CanEnableApi}"
+                            Style="{StaticResource ModernToggleSwitch}" />
                     </Grid>
-                    
+
                     <StackPanel Margin="0,16,0,0">
-                        <TextBlock Text="Port" 
-                                   Foreground="{StaticResource TextPrimaryBrush}"
-                                   FontWeight="SemiBold"/>
-                        <TextBox Text="{Binding ApiPort, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource ModernTextBox}"
-                                 Width="100"
-                                 HorizontalAlignment="Left"
-                                 Margin="0,8,0,0"/>
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="{StaticResource TextPrimaryBrush}"
+                            Text="Port" />
+                        <TextBox
+                            Width="100"
+                            Margin="0,8,0,0"
+                            HorizontalAlignment="Left"
+                            Style="{StaticResource ModernTextBox}"
+                            Text="{Binding ApiPort, UpdateSourceTrigger=PropertyChanged}" />
                     </StackPanel>
-                    
+
                     <StackPanel Margin="0,16,0,0">
-                        <TextBlock Text="Status" 
-                                   Foreground="{StaticResource TextPrimaryBrush}"
-                                   FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding ApiStatus}" 
-                                   Foreground="{StaticResource AccentBrush}"
-                                   FontSize="12"
-                                   Margin="0,4,0,0"/>
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="{StaticResource TextPrimaryBrush}"
+                            Text="Status" />
+                        <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                Foreground="{StaticResource AccentBrush}"
+                                Text="{Binding ApiStatus}" />
+                            <Button
+                                Margin="12,0,0,0"
+                                Padding="8,4"
+                                Background="{StaticResource AccentBrush}"
+                                BorderThickness="0"
+                                Click="OpenApiUrl_Click"
+                                Content="🌐 Open"
+                                Cursor="Hand"
+                                FontSize="11"
+                                Foreground="White"
+                                Visibility="{Binding IsApiEnabled, Converter={StaticResource BoolToVis}}">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border
+                                                        Padding="{TemplateBinding Padding}"
+                                                        Background="{TemplateBinding Background}"
+                                                        CornerRadius="4">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
                     </StackPanel>
-                    
-                    <TextBlock Text="Use with VS Code Continue, LM Studio clients, or curl"
-                               Foreground="{StaticResource TextMutedBrush}"
-                               FontSize="11"
-                               FontStyle="Italic"
-                               Margin="0,12,0,0"/>
+
+                    <TextBlock
+                        Margin="0,12,0,0"
+                        FontSize="11"
+                        FontStyle="Italic"
+                        Foreground="{StaticResource TextMutedBrush}"
+                        Text="Use with VS Code Continue, LM Studio clients, or curl" />
                 </StackPanel>
             </Border>
-            
-            <!-- Hardware Information -->
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+
+            <!--  Hardware Information  -->
+            <Border Margin="0,0,0,16" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="🖥 Hardware Information" 
-                               FontSize="18" 
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               Margin="0,0,0,16"/>
-                    
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource TextPrimaryBrush}"
+                        Text="🖥 Hardware Information" />
+
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="150"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        
-                        <TextBlock Text="GPU:" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Column="1" Text="{Binding GpuInfo}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                        
-                        <TextBlock Grid.Row="1" Text="System RAM:" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding RamInfo}" Foreground="{StaticResource TextPrimaryBrush}"/>
+
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            Foreground="{StaticResource TextSecondaryBrush}"
+                            Text="GPU:" />
+                        <TextBlock
+                            Grid.Column="1"
+                            Margin="0,0,0,8"
+                            Foreground="{StaticResource TextPrimaryBrush}"
+                            Text="{Binding GpuInfo}" />
+
+                        <TextBlock
+                            Grid.Row="1"
+                            Foreground="{StaticResource TextSecondaryBrush}"
+                            Text="System RAM:" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Foreground="{StaticResource TextPrimaryBrush}"
+                            Text="{Binding RamInfo}" />
                     </Grid>
-                    
-                    <Button Content="🔄 Refresh Hardware Info" 
-                            Command="{Binding RefreshHardwareInfoCommand}"
-                            Style="{StaticResource SecondaryButton}"
-                            HorizontalAlignment="Left"
-                            Margin="0,16,0,0"/>
+
+                    <Button
+                        Margin="0,16,0,0"
+                        HorizontalAlignment="Left"
+                        Command="{Binding RefreshHardwareInfoCommand}"
+                        Content="🔄 Refresh Hardware Info"
+                        Style="{StaticResource SecondaryButton}" />
                 </StackPanel>
             </Border>
-            
-            <!-- Execution Backend -->
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+
+            <!--  Execution Backend  -->
+            <Border Margin="0,0,0,16" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="⚡ Execution Backend" 
-                               FontSize="18" 
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               Margin="0,0,0,8"/>
-                    
-                    <TextBlock Text="Choose how model inference runs. GPU acceleration provides better performance." 
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,16"/>
-                    
+                    <TextBlock
+                        Margin="0,0,0,8"
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource TextPrimaryBrush}"
+                        Text="⚡ Execution Backend" />
+
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        Foreground="{StaticResource TextSecondaryBrush}"
+                        Text="Choose how model inference runs. GPU acceleration provides better performance."
+                        TextWrapping="Wrap" />
+
                     <StackPanel>
-                        <TextBlock Text="Available Backends:" 
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   Margin="0,0,0,8"/>
-                        
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            Foreground="{StaticResource TextSecondaryBrush}"
+                            Text="Available Backends:" />
+
                         <ItemsControl ItemsSource="{Binding AvailableBackends}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal"/>
+                                    <StackPanel Orientation="Horizontal" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <RadioButton GroupName="Backend"
-                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                 Margin="0,0,16,0"
-                                                 Cursor="Hand">
+                                    <RadioButton
+                                        Margin="0,0,16,0"
+                                        Cursor="Hand"
+                                        GroupName="Backend"
+                                        IsChecked="{Binding IsSelected, Mode=TwoWay}">
                                         <RadioButton.Style>
                                             <Style TargetType="RadioButton">
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="RadioButton">
-                                                            <Border x:Name="border"
-                                                                    Background="{StaticResource SurfaceLightBrush}"
-                                                                    BorderBrush="{StaticResource BorderBrush}"
-                                                                    BorderThickness="2"
-                                                                    CornerRadius="8"
-                                                                    Padding="16,12">
-                                                                <TextBlock Text="{Binding Converter={StaticResource BackendToString}}"
-                                                                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                            <Border
+                                                                x:Name="border"
+                                                                Padding="16,12"
+                                                                Background="{StaticResource SurfaceLightBrush}"
+                                                                BorderBrush="{StaticResource BorderBrush}"
+                                                                BorderThickness="2"
+                                                                CornerRadius="8">
+                                                                <TextBlock Foreground="{StaticResource TextPrimaryBrush}" Text="{Binding Converter={StaticResource BackendToString}}" />
                                                             </Border>
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsChecked" Value="True">
-                                                                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-                                                                    <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                                                                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                                                    <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryBrush}" />
                                                                 </Trigger>
                                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryLightBrush}"/>
+                                                                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryLightBrush}" />
                                                                 </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
@@ -217,130 +295,177 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        
-                        <!-- Backend Options as Buttons -->
-                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                            <Button Content="CPU"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Margin="0,0,8,0"
-                                    Tag="Cpu"/>
-                            <Button Content="CUDA (NVIDIA)"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Margin="0,0,8,0"
-                                    IsEnabled="{Binding Hardware.HasCuda}"
-                                    Tag="Cuda"/>
-                            <Button Content="DirectML"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Margin="0,0,8,0"
-                                    IsEnabled="{Binding Hardware.HasDirectML}"
-                                    Tag="DirectML"/>
-                            <Button Content="NPU"
-                                    Style="{StaticResource SecondaryButton}"
-                                    IsEnabled="{Binding Hardware.HasNpu}"
-                                    Tag="Npu"/>
+
+                        <!--  Backend Options as Buttons  -->
+                        <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+                            <Button
+                                Margin="0,0,8,0"
+                                Content="CPU"
+                                Style="{StaticResource SecondaryButton}"
+                                Tag="Cpu" />
+                            <Button
+                                Margin="0,0,8,0"
+                                Content="CUDA (NVIDIA)"
+                                IsEnabled="{Binding Hardware.HasCuda}"
+                                Style="{StaticResource SecondaryButton}"
+                                Tag="Cuda" />
+                            <Button
+                                Margin="0,0,8,0"
+                                Content="DirectML"
+                                IsEnabled="{Binding Hardware.HasDirectML}"
+                                Style="{StaticResource SecondaryButton}"
+                                Tag="DirectML" />
+                            <Button
+                                Content="NPU"
+                                IsEnabled="{Binding Hardware.HasNpu}"
+                                Style="{StaticResource SecondaryButton}"
+                                Tag="Npu" />
                         </StackPanel>
                     </StackPanel>
-                    
-                    <Border Background="{StaticResource SurfaceBrush}" 
-                            CornerRadius="8" 
-                            Padding="12"
-                            Margin="0,16,0,0">
-                        <TextBlock Text="{Binding BackendStatus}" 
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   TextWrapping="Wrap"/>
+
+                    <Border
+                        Margin="0,16,0,0"
+                        Padding="12"
+                        Background="{StaticResource SurfaceBrush}"
+                        CornerRadius="8">
+                        <TextBlock
+                            Foreground="{StaticResource TextSecondaryBrush}"
+                            Text="{Binding BackendStatus}"
+                            TextWrapping="Wrap" />
                     </Border>
-                    
-                    <Button Content="⭐ Use Recommended" 
-                            Command="{Binding UseRecommendedBackendCommand}"
-                            Style="{StaticResource AccentButton}"
-                            HorizontalAlignment="Left"
-                            Margin="0,16,0,0"/>
+
+                    <Button
+                        Margin="0,16,0,0"
+                        HorizontalAlignment="Left"
+                        Command="{Binding UseRecommendedBackendCommand}"
+                        Content="⭐ Use Recommended"
+                        Style="{StaticResource AccentButton}" />
                 </StackPanel>
             </Border>
-            
-            <!-- Storage Settings -->
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+
+            <!--  Storage Settings  -->
+            <Border Margin="0,0,0,16" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="📁 Model Storage" 
-                               FontSize="18" 
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               Margin="0,0,0,8"/>
-                    
-                    <TextBlock Text="Choose where downloaded models are stored. Models can be several GBs in size." 
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,16"/>
-                    
+                    <TextBlock
+                        Margin="0,0,0,8"
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource TextPrimaryBrush}"
+                        Text="📁 Model Storage" />
+
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        Foreground="{StaticResource TextSecondaryBrush}"
+                        Text="Choose where downloaded models are stored. Models can be several GBs in size."
+                        TextWrapping="Wrap" />
+
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        
-                        <TextBox Text="{Binding ModelsDirectory}" 
-                                 Style="{StaticResource ModernTextBox}"
-                                 IsReadOnly="True"/>
-                        
-                        <Button Grid.Column="1" 
-                                Content="📂 Browse"
-                                Command="{Binding BrowseModelsDirectoryCommand}"
-                                Style="{StaticResource SecondaryButton}"
-                                Margin="12,0,0,0"/>
+
+                        <TextBox
+                            IsReadOnly="True"
+                            Style="{StaticResource ModernTextBox}"
+                            Text="{Binding ModelsDirectory}" />
+
+                        <Button
+                            Grid.Column="1"
+                            Margin="12,0,0,0"
+                            Command="{Binding BrowseModelsDirectoryCommand}"
+                            Content="📂 Browse"
+                            Style="{StaticResource SecondaryButton}" />
                     </Grid>
                 </StackPanel>
             </Border>
-            
-            <!-- System Prompt -->
-            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+
+            <!--  System Prompt  -->
+            <Border Margin="0,0,0,16" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="💬 System Prompt" 
-                               FontSize="18" 
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               Margin="0,0,0,8"/>
-                    
-                    <TextBlock Text="Configure the default personality and behavior of the AI assistant." 
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,16"/>
-                    
-                    <TextBox Text="{Binding SystemPrompt, UpdateSourceTrigger=PropertyChanged}" 
-                             Style="{StaticResource ModernTextBox}"
-                             AcceptsReturn="True"
-                             TextWrapping="Wrap"
-                             MinHeight="100"
-                             MaxHeight="200"
-                             VerticalScrollBarVisibility="Auto"/>
-                    
-                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <Button Content="🔄 Reset to Default"
-                                Command="{Binding ResetSystemPromptCommand}"
-                                Style="{StaticResource SecondaryButton}"
-                                Margin="0,0,8,0"/>
+                    <TextBlock
+                        Margin="0,0,0,8"
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource TextPrimaryBrush}"
+                        Text="💬 System Prompt" />
+
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        Foreground="{StaticResource TextSecondaryBrush}"
+                        Text="Configure the default personality and behavior of the AI assistant."
+                        TextWrapping="Wrap" />
+
+                    <TextBox
+                        MinHeight="100"
+                        MaxHeight="200"
+                        AcceptsReturn="True"
+                        Style="{StaticResource ModernTextBox}"
+                        Text="{Binding SystemPrompt, UpdateSourceTrigger=PropertyChanged}"
+                        TextWrapping="Wrap"
+                        VerticalScrollBarVisibility="Auto" />
+
+                    <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+                        <Button
+                            Margin="0,0,8,0"
+                            Command="{Binding ResetSystemPromptCommand}"
+                            Content="🔄 Reset to Default"
+                            Style="{StaticResource SecondaryButton}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
-            
-            <!-- About Section -->
-            <Border Style="{StaticResource CardBorder}" Margin="0,16,0,0">
+
+            <!--  About Section  -->
+            <Border Margin="0,16,0,0" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="ℹ About KaiROS AI" 
-                               FontSize="18" 
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               Margin="0,0,0,16"/>
-                    
+                    <TextBlock
+                        Margin="0,0,0,16"
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource TextPrimaryBrush}"
+                        Text="ℹ About KaiROS AI" />
+
                     <TextBlock Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap">
-                        <Run Text="KaiROS AI"/>
-                        <Run Text="is a local AI assistant powered by"/>
-                        <Run Text="LLamaSharp" FontWeight="SemiBold"/>
-                        <Run Text=". Run large language models privately on your own hardware without sending data to the cloud."/>
+                        <Run Text="KaiROS AI" />
+                        <Run Text="is a local AI assistant powered by" />
+                        <Run FontWeight="SemiBold" Text="LLamaSharp" />
+                        <Run Text=". Run large language models privately on your own hardware without sending data to the cloud." />
                     </TextBlock>
-                    
-                    <TextBlock Foreground="{StaticResource TextMutedBrush}" Margin="0,12,0,0" FontSize="12">
-                        <Run Text="Version 1.0.0 • Built with .NET 9 • LLamaSharp 0.19"/>
+
+                    <TextBlock
+                        Margin="0,12,0,0"
+                        FontSize="12"
+                        Foreground="{StaticResource TextMutedBrush}">
+                        <Run Text="Version 1.0.4 • Built with .NET 9 • " />
                     </TextBlock>
+
+                    <Button
+                        Margin="0,20,0,0"
+                        Padding="16,10"
+                        HorizontalAlignment="Left"
+                        Background="{StaticResource AccentBrush}"
+                        BorderThickness="0"
+                        Click="FeedbackHub_Click"
+                        Content="💬 Send Feedback"
+                        Cursor="Hand"
+                        Foreground="White">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border
+                                                Padding="{TemplateBinding Padding}"
+                                                Background="{TemplateBinding Background}"
+                                                CornerRadius="6">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </StackPanel>
             </Border>
         </StackPanel>
