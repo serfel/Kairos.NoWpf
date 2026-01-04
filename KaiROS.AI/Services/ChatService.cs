@@ -152,9 +152,16 @@ public class ChatService : IChatService
         var latestUserMessage = messageList.LastOrDefault(m => m.Role == ChatRole.User);
         string documentContext = string.Empty;
         
+        System.Diagnostics.Debug.WriteLine($"[RAG] BuildPrompt called. Has user message: {latestUserMessage != null}, Loaded docs: {documentService.LoadedDocuments.Count}");
+        
         if (latestUserMessage != null && documentService.LoadedDocuments.Count > 0)
         {
             documentContext = documentService.GetContextForQuery(latestUserMessage.Content, 3);
+            System.Diagnostics.Debug.WriteLine($"[RAG] Context retrieved: {documentContext?.Length ?? 0} characters");
+            if (!string.IsNullOrEmpty(documentContext))
+            {
+                System.Diagnostics.Debug.WriteLine($"[RAG] Context preview: {documentContext.Substring(0, Math.Min(200, documentContext.Length))}...");
+            }
         }
         
         foreach (var msg in messageList)
