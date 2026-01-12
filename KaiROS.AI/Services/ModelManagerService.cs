@@ -85,7 +85,11 @@ public class ModelManagerService : IModelManagerService
                 SizeBytes = custom.SizeBytes,
                 IsDownloaded = custom.IsLocal || File.Exists(Path.Combine(_modelsDirectory, custom.Name)),
                 IsCustomModel = true,
-                CustomModelId = custom.Id
+                CustomModelId = custom.Id,
+                Organization = "Local",
+                OrgLogoUrl = "pack://application:,,,/Assets/logo.png",
+                Family = "Custom",
+                Variant = "All"
             };
 
             if (model.IsDownloaded)
@@ -228,36 +232,84 @@ public class ModelManagerService : IModelManagerService
             _currentGpuLayers = CalculateOptimalGpuLayers(hardwareInfo, model);
 
             System.Diagnostics.Debug.WriteLine($"[KaiROS] Loading model with backend: {hardwareInfo.SelectedBackend}, GpuLayerCount: {_currentGpuLayers}");
-            await Task.Run(() =>
+
+            // Try loading with decreasing GPU layers on failure
+            int[] layersToTry = new[]
             {
-                // Report parameter setup progress
-                progress?.Report(20);
-                ModelLoadProgress?.Invoke(this, 20);
+                _currentGpuLayers,
+                Math.Max(1, _currentGpuLayers / 2),  // 50%
+                Math.Max(1, _currentGpuLayers / 4),  // 25%
+                0  // CPU fallback
+            };
 
-                var parameters = new ModelParams(model.LocalPath)
+            Exception? lastException = null;
+
+            foreach (var layers in layersToTry)
+            {
+                try
                 {
-                    ContextSize = 4096,
-                    GpuLayerCount = _currentGpuLayers
-                };
+                    System.Diagnostics.Debug.WriteLine($"[KaiROS] Attempting to load with {layers} GPU layers...");
 
-                progress?.Report(30);
-                ModelLoadProgress?.Invoke(this, 30);
+                    await Task.Run(() =>
+                    {
+                        progress?.Report(20);
+                        ModelLoadProgress?.Invoke(this, 20);
 
-                // This is the heavy operation - loading weights
-                _loadedWeights = LLamaWeights.LoadFromFile(parameters);
+                        var parameters = new ModelParams(model.LocalPath)
+                        {
+                            ContextSize = 4096,
+                            GpuLayerCount = layers
+                        };
 
-                progress?.Report(90);
-                ModelLoadProgress?.Invoke(this, 90);
-            });
+                        progress?.Report(30);
+                        ModelLoadProgress?.Invoke(this, 30);
 
-            _activeModel = model;
-            model.IsActive = true;
+                        // This is the heavy operation - loading weights
+                        _loadedWeights = LLamaWeights.LoadFromFile(parameters);
 
-            progress?.Report(100);
-            ModelLoadProgress?.Invoke(this, 100);
+                        progress?.Report(90);
+                        ModelLoadProgress?.Invoke(this, 90);
+                    });
 
-            ModelLoaded?.Invoke(this, model);
-            return true;
+                    // Success!
+                    _currentGpuLayers = layers;
+                    _activeModel = model;
+                    model.IsActive = true;
+
+                    progress?.Report(100);
+                    ModelLoadProgress?.Invoke(this, 100);
+
+                    if (layers < layersToTry[0])
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[KaiROS] Model loaded successfully with reduced layers: {layers} (original: {layersToTry[0]})");
+                    }
+
+                    ModelLoaded?.Invoke(this, model);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    System.Diagnostics.Debug.WriteLine($"[KaiROS] Failed to load with {layers} layers: {ex.Message}");
+
+                    // Clean up any partial state
+                    if (_loadedWeights != null)
+                    {
+                        try { _loadedWeights.Dispose(); } catch { }
+                        _loadedWeights = null;
+                    }
+
+                    // If this was already CPU fallback (0 layers), don't retry
+                    if (layers == 0) break;
+                }
+            }
+
+            // All attempts failed
+            System.Diagnostics.Debug.WriteLine($"Error loading model: {lastException?.Message}");
+            model.LoadError = lastException?.Message ?? "Failed to load model after multiple attempts";
+            progress?.Report(0);
+            ModelLoadProgress?.Invoke(this, 0);
+            return false;
         }
         catch (Exception ex)
         {
