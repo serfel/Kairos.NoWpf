@@ -1,0 +1,275 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using KaiROS.AI.Models;
+using KaiROS.AI.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+namespace KaiROS.AI;
+
+class Program
+{
+    private static ServiceProvider? _serviceProvider;
+    private static ChatService? _chatService;
+    private static ModelManagerService? _modelManagerService;
+
+    static async Task Main(string[] args)
+    {
+        Console.WriteLine("KaiROS AI - Local AI Assistant");
+        Console.WriteLine("===============================");
+
+        // Build configuration
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
+
+        // Setup dependency injection
+        var services = new ServiceCollection();
+        ConfigureServices(services, configuration);
+        _serviceProvider = services.BuildServiceProvider();
+
+        // Get required services
+        _modelManagerService = _serviceProvider.GetRequiredService<ModelManagerService>();
+        _chatService = _serviceProvider.GetRequiredService<ChatService>();
+
+        // Initialize the model manager
+        await _modelManagerService.InitializeAsync();
+
+        Console.WriteLine("\nWelcome to KaiROS AI Console!");
+        Console.WriteLine("Commands:");
+        Console.WriteLine("  list          - List available models");
+        Console.WriteLine("  load <name>   - Load a model by name");
+        Console.WriteLine("  chat          - Start chatting with the loaded model");
+        Console.WriteLine("  exit          - Exit the application");
+        Console.WriteLine("");
+
+        // Main loop
+        while (true)
+        {
+            Console.Write("> ");
+            var input = Console.ReadLine()?.Trim();
+
+            if (string.IsNullOrEmpty(input))
+                continue;
+
+            var parts = input.Split(' ', 2);
+            var command = parts[0].ToLower();
+
+            switch (command)
+            {
+                case "list":
+                    await ListModels();
+                    break;
+                case "load":
+                    if (parts.Length > 1)
+                        await LoadModel(parts[1]);
+                    else
+                        Console.WriteLine("Usage: load <model-name>");
+                    break;
+                case "chat":
+                    if (_chatService?.IsModelLoaded == true)
+                        await StartChatting();
+                    else
+                        Console.WriteLine("No model loaded. Please load a model first.");
+                    break;
+                case "exit":
+                case "quit":
+                    Console.WriteLine("Goodbye!");
+                    return;
+                default:
+                    Console.WriteLine($"Unknown command: {command}");
+                    Console.WriteLine("Available commands: list, load, chat, exit");
+                    break;
+            }
+        }
+    }
+
+    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    {
+        // Configuration
+        services.AddSingleton<IConfiguration>(configuration);
+
+        // Get app settings - Use LocalAppData for MSIX compatibility (installation folder is read-only)
+        var appSettings = configuration.GetSection("AppSettings").Get<AppSettings>() ?? new AppSettings();
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var modelsDir = Path.Combine(localAppData, "KaiROS.AI", "Models");
+
+        // Services
+        services.AddSingleton<IDatabaseService, DatabaseService>();
+        services.AddSingleton<IDownloadService>(sp => new DownloadService(modelsDir));
+        services.AddSingleton<IHardwareDetectionService, HardwareDetectionService>();
+        services.AddSingleton<ISessionService, SessionService>();
+        services.AddSingleton<IExportService, ExportService>();
+        services.AddSingleton<IDocumentService, DocumentService>();
+        services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<ModelManagerService>();
+        services.AddSingleton<IModelManagerService>(sp => sp.GetRequiredService<ModelManagerService>());
+        services.AddSingleton<ChatService>();
+        services.AddSingleton<IChatService>(sp => sp.GetRequiredService<ChatService>());
+        services.AddSingleton<IApiService, ApiService>();
+    }
+
+    private static async Task ListModels()
+    {
+        if (_modelManagerService == null)
+        {
+            Console.WriteLine("Model manager not initialized.");
+            return;
+        }
+
+        var models = _modelManagerService.Models;
+        
+        if (models.Count == 0)
+        {
+            Console.WriteLine("No models available.");
+            return;
+        }
+
+        Console.WriteLine("\nAvailable Models:");
+        Console.WriteLine("------------------");
+        
+        foreach (var model in models)
+        {
+            var status = model.IsDownloaded ? "DOWNLOADED" : "NOT DOWNLOADED";
+            var active = model.IsActive ? " [ACTIVE]" : "";
+            
+            Console.WriteLine($"{model.DisplayName} ({model.Name}) - {status}{active}");
+            Console.WriteLine($"  Description: {model.Description}");
+            Console.WriteLine($"  Size: {(model.SizeBytes / (1024.0 * 1024.0 * 1024.0)):F2} GB");
+            Console.WriteLine("");
+        }
+    }
+
+    private static async Task LoadModel(string modelName)
+    {
+        if (_modelManagerService == null)
+        {
+            Console.WriteLine("Model manager not initialized.");
+            return;
+        }
+
+        var model = _modelManagerService.Models.FirstOrDefault(m => 
+            string.Equals(m.Name, modelName, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(m.DisplayName, modelName, StringComparison.OrdinalIgnoreCase));
+
+        if (model == null)
+        {
+            Console.WriteLine($"Model '{modelName}' not found.");
+            Console.WriteLine("Use 'list' to see available models.");
+            return;
+        }
+
+        if (!model.IsDownloaded)
+        {
+            Console.WriteLine($"Model '{model.Name}' is not downloaded. Starting download...");
+            
+            var progress = new Progress<double>(p => 
+            {
+                Console.Write($"\rDownload progress: {p:F1}%");
+            });
+
+            try
+            {
+                var success = await _modelManagerService.DownloadModelAsync(model, progress);
+                
+                if (success)
+                {
+                    Console.WriteLine("\nDownload completed successfully!");
+                }
+                else
+                {
+                    Console.WriteLine("\nDownload failed.");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\nDownload failed: {ex.Message}");
+                return;
+            }
+        }
+
+        Console.WriteLine($"Loading model '{model.Name}'...");
+        
+        var loadProgress = new Progress<double>(p =>
+        {
+            Console.Write($"\rLoading progress: {p:F1}%");
+        });
+
+        try
+        {
+            var success = await _modelManagerService.SetActiveModelAsync(model, loadProgress);
+            
+            if (success)
+            {
+                Console.WriteLine("\nModel loaded successfully!");
+                Console.WriteLine($"Current model: {model.DisplayName}");
+            }
+            else
+            {
+                Console.WriteLine($"\nFailed to load model: {model.LoadError}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"\nFailed to load model: {ex.Message}");
+        }
+    }
+
+    private static async Task StartChatting()
+    {
+        if (_chatService == null || !_chatService.IsModelLoaded)
+        {
+            Console.WriteLine("No model loaded. Please load a model first.");
+            return;
+        }
+
+        Console.WriteLine("\nStarting chat session. Type 'exit' to end the conversation.");
+        Console.WriteLine("----------------------------------------------------------");
+
+        var messages = new List<ChatMessage>
+        {
+            new ChatMessage { Role = ChatRole.System, Content = "You are a helpful assistant. Be concise and direct." }
+        };
+
+        while (true)
+        {
+            Console.Write("\nYou: ");
+            var userInput = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(userInput))
+                continue;
+
+            if (userInput.ToLower() == "exit" || userInput.ToLower() == "quit")
+                break;
+
+            messages.Add(new ChatMessage { Role = ChatRole.User, Content = userInput });
+
+            Console.Write("\nAssistant: ");
+
+            try
+            {
+                var response = new System.Text.StringBuilder();
+                
+                await foreach (var token in _chatService.GenerateResponseStreamAsync(messages))
+                {
+                    Console.Write(token);
+                    response.Append(token);
+                }
+
+                messages.Add(new ChatMessage { Role = ChatRole.Assistant, Content = response.ToString() });
+                
+                Console.WriteLine(); // New line after response
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error generating response: {ex.Message}");
+            }
+        }
+
+        Console.WriteLine("\nChat session ended.");
+    }
+}

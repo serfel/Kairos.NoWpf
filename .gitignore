@@ -1,47 +1,35 @@
-# .NET
+```
+# Backup files
+*.backup
+
+# Build artifacts
+*.exe
+*.dll
+*.pdb
 bin/
 obj/
-*.dll
-*.exe
-*.pdb
-*.msix
+Debug/
+Release/
 
-# IDE
+# Dependencies
+packages/
+node_modules/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Editors
 .vs/
-.vscode/
-*.user
-*.suo
+.idea/
 *.userprefs
 
-# Build results
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
-[Bb]uild/
-bld/
+# Environment
+.env
+.env.local
+*.env.*
 
-# NuGet
-*.nupkg
-**/packages/*
-!**/packages/build/
-
-# Models (large files)
-**/Models/*.gguf
-**/Models/*.partial
-
-# OS generated
+# OS generated files
 .DS_Store
 Thumbs.db
-*.log
-
-# Rider
-.idea/
-
-# Test results
-TestResults/
-*.trx
-
-# Local settings
-local.settings.json
-appsettings.Development.json
+```
