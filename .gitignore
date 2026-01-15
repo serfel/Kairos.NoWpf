@@ -1,35 +1,44 @@
 ```
-# Backup files
-*.backup
+# Build results
+[KaiROS.AI/]obj/
+[KaiROS.AI/]bin/
+*.sln.cache
+*.user
+*.userosscache
+*.suo
+*.csproj.user
 
-# Build artifacts
-*.exe
-*.dll
-*.pdb
-bin/
-obj/
-Debug/
-Release/
+# Visual Studio Code
+.vscode/
 
-# Dependencies
-packages/
-node_modules/
+# Windows
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
 
-# Logs and temp files
-*.log
+# macOS
+.DS_Store
+
+# Temporary files
 *.tmp
+*.temp
+*.bak
 
-# Editors
-.vs/
-.idea/
-*.userprefs
+# Log files
+*.log
 
-# Environment
+# Environment specific files
 .env
 .env.local
 *.env.*
 
+# User-specific files
+.vs/
+.idea/
+
 # OS generated files
-.DS_Store
-Thumbs.db
+._*
+.Spotlight-V100
+.Trashes
 ```

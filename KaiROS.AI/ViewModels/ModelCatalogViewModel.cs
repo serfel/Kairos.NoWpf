@@ -193,11 +193,23 @@ public partial class ModelCatalogViewModel : ViewModelBase
         _downloadCts[model.Name] = cts;
 
         // Update UI state on UI thread
-        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        System.Windows.Forms.Form activeForm = System.Windows.Forms.Form.ActiveForm;
+        if (activeForm != null)
         {
-            modelVm.IsDownloading = true;
-            modelVm.IsPaused = false;
-        });
+            if (activeForm.InvokeRequired)
+            {
+                activeForm.Invoke((MethodInvoker)(() =>
+                {
+                    modelVm.IsDownloading = true;
+                    modelVm.IsPaused = false;
+                }));
+            }
+            else
+            {
+                modelVm.IsDownloading = true;
+                modelVm.IsPaused = false;
+            }
+        }
 
         try
         {

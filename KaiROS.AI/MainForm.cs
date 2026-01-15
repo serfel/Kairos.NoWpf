@@ -14,6 +14,12 @@ public partial class MainForm : Form
     private Label statusLabel;
     private NotifyIcon trayIcon;
     private ContextMenuStrip trayMenu;
+    
+    // WinForms views
+    private ChatForm chatForm;
+    private ModelCatalogForm modelCatalogForm;
+    private SettingsForm settingsForm;
+    private DocumentForm documentForm;
 
     public MainForm(MainViewModel viewModel)
     {
@@ -231,6 +237,113 @@ public partial class MainForm : Form
 
         // Update status label
         statusLabel.Text = _viewModel.StatusText ?? "Ready";
+        
+        // Handle navigation based on ViewModel's current view
+        HandleNavigationBasedOnViewModel();
+    }
+
+    private void HandleNavigationBasedOnViewModel()
+    {
+        // Hide all forms first
+        HideAllForms();
+        
+        // Show the appropriate form based on the ViewModel's current view
+        if (_viewModel.CurrentView == _viewModel.CatalogViewModel)
+        {
+            ShowModelCatalogForm();
+            navigationList.SelectedIndex = 0;
+        }
+        else if (_viewModel.CurrentView == _viewModel.ChatViewModel)
+        {
+            ShowChatForm();
+            navigationList.SelectedIndex = 1;
+        }
+        else if (_viewModel.CurrentView == _viewModel.DocumentViewModel)
+        {
+            ShowDocumentForm();
+            navigationList.SelectedIndex = 2;
+        }
+        else if (_viewModel.CurrentView == _viewModel.SettingsViewModel)
+        {
+            ShowSettingsForm();
+            navigationList.SelectedIndex = 3;
+        }
+    }
+
+    private void HideAllForms()
+    {
+        if (chatForm != null && !chatForm.IsDisposed)
+        {
+            chatForm.Hide();
+        }
+        if (modelCatalogForm != null && !modelCatalogForm.IsDisposed)
+        {
+            modelCatalogForm.Hide();
+        }
+        if (settingsForm != null && !settingsForm.IsDisposed)
+        {
+            settingsForm.Hide();
+        }
+        if (documentForm != null && !documentForm.IsDisposed)
+        {
+            documentForm.Hide();
+        }
+    }
+
+    private void ShowModelCatalogForm()
+    {
+        if (modelCatalogForm == null || modelCatalogForm.IsDisposed)
+        {
+            modelCatalogForm = new ModelCatalogForm(_viewModel.CatalogViewModel);
+        }
+        
+        modelCatalogForm.TopLevel = false;
+        modelCatalogForm.Dock = DockStyle.Fill;
+        modelCatalogForm.FormBorderStyle = FormBorderStyle.None;
+        modelCatalogForm.Parent = contentPanel;
+        modelCatalogForm.Show();
+    }
+
+    private void ShowChatForm()
+    {
+        if (chatForm == null || chatForm.IsDisposed)
+        {
+            chatForm = new ChatForm(_viewModel.ChatViewModel);
+        }
+        
+        chatForm.TopLevel = false;
+        chatForm.Dock = DockStyle.Fill;
+        chatForm.FormBorderStyle = FormBorderStyle.None;
+        chatForm.Parent = contentPanel;
+        chatForm.Show();
+    }
+
+    private void ShowSettingsForm()
+    {
+        if (settingsForm == null || settingsForm.IsDisposed)
+        {
+            settingsForm = new SettingsForm(_viewModel.SettingsViewModel);
+        }
+        
+        settingsForm.TopLevel = false;
+        settingsForm.Dock = DockStyle.Fill;
+        settingsForm.FormBorderStyle = FormBorderStyle.None;
+        settingsForm.Parent = contentPanel;
+        settingsForm.Show();
+    }
+
+    private void ShowDocumentForm()
+    {
+        if (documentForm == null || documentForm.IsDisposed)
+        {
+            documentForm = new DocumentForm(_viewModel.DocumentViewModel);
+        }
+        
+        documentForm.TopLevel = false;
+        documentForm.Dock = DockStyle.Fill;
+        documentForm.FormBorderStyle = FormBorderStyle.None;
+        documentForm.Parent = contentPanel;
+        documentForm.Show();
     }
 
     private void NavigationList_SelectedIndexChanged(object sender, EventArgs e)

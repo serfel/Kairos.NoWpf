@@ -45,6 +45,24 @@
     <Compile Update="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Views\ChatForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Views\ModelCatalogForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Views\SettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Views\DocumentForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Views\AddCustomModelForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Controls\CodeBlock.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
