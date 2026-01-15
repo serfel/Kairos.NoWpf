@@ -112,15 +112,31 @@ public partial class ChatViewModel : ViewModelBase
 
     private void OnStatsUpdated(object? sender, InferenceStats stats)
     {
-        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        System.Windows.Forms.Form activeForm = System.Windows.Forms.Form.ActiveForm;
+        if (activeForm != null)
         {
-            TokensPerSecond = Math.Round(stats.TokensPerSecond, 1);
-            TotalTokens = stats.TotalTokens;
-            MemoryUsage = stats.MemoryUsageText;
-            ElapsedTime = $"{stats.ElapsedTime.TotalSeconds:F1}s";
-            ContextWindow = stats.ContextSize > 0 ? $"{stats.ContextSize:N0}" : "N/A";
-            GpuLayers = stats.GpuLayers >= 0 ? stats.GpuLayers.ToString() : "N/A";
-        });
+            if (activeForm.InvokeRequired)
+            {
+                activeForm.Invoke((MethodInvoker)(() =>
+                {
+                    TokensPerSecond = Math.Round(stats.TokensPerSecond, 1);
+                    TotalTokens = stats.TotalTokens;
+                    MemoryUsage = stats.MemoryUsageText;
+                    ElapsedTime = $"{stats.ElapsedTime.TotalSeconds:F1}s";
+                    ContextWindow = stats.ContextSize > 0 ? $"{stats.ContextSize:N0}" : "N/A";
+                    GpuLayers = stats.GpuLayers >= 0 ? stats.GpuLayers.ToString() : "N/A";
+                }));
+            }
+            else
+            {
+                TokensPerSecond = Math.Round(stats.TokensPerSecond, 1);
+                TotalTokens = stats.TotalTokens;
+                MemoryUsage = stats.MemoryUsageText;
+                ElapsedTime = $"{stats.ElapsedTime.TotalSeconds:F1}s";
+                ContextWindow = stats.ContextSize > 0 ? $"{stats.ContextSize:N0}" : "N/A";
+                GpuLayers = stats.GpuLayers >= 0 ? stats.GpuLayers.ToString() : "N/A";
+            }
+        }
     }
 
     [RelayCommand]
@@ -372,7 +388,7 @@ public partial class ChatMessageViewModel : ObservableObject
 
     // Streaming optimization - batch tokens for smoother UI updates
     private readonly System.Text.StringBuilder _tokenBuffer = new();
-    private System.Windows.Threading.DispatcherTimer? _flushTimer;
+    private System.Windows.Forms.Timer? _flushTimer;
     private int _pendingTokenCount;
     private const int BATCH_TOKEN_COUNT = 15;  // Flush after this many tokens
     private const int FLUSH_INTERVAL_MS = 50;   // Or flush after this many ms
@@ -406,14 +422,14 @@ public partial class ChatMessageViewModel : ObservableObject
     {
         if (_flushTimer == null)
         {
-            _flushTimer = new System.Windows.Threading.DispatcherTimer
+            _flushTimer = new System.Windows.Forms.Timer
             {
-                Interval = TimeSpan.FromMilliseconds(FLUSH_INTERVAL_MS)
+                Interval = FLUSH_INTERVAL_MS
             };
             _flushTimer.Tick += (s, e) => FlushBuffer();
         }
 
-        if (!_flushTimer.IsEnabled)
+        if (!_flushTimer.Enabled)
         {
             _flushTimer.Start();
         }
